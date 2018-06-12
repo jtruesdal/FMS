@@ -37,6 +37,45 @@ public :: version
 
 real :: realnumber !< dummy variable to use in HUGE initializations
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+integer,parameter,private :: R8 =  selected_real_kind(12) ! 8 byte real
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!  make fms/fv3 consistent with CESM by using same constants and precision
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+   real(R8),parameter,private :: SHR_CONST_PI      = 3.14159265358979323846_R8  ! pi
+   real(R8),parameter,private :: SHR_CONST_CDAY    = 86400.0_R8      ! sec in calendar day ~ sec
+   real(R8),parameter,private :: SHR_CONST_SDAY    = 86164.0_R8      ! sec in siderial day ~ sec
+   real(R8),parameter,private :: SHR_CONST_OMEGA   = 2.0_R8*SHR_CONST_PI/SHR_CONST_SDAY ! earth rot ~ rad/sec
+   real(R8),parameter,private :: SHR_CONST_REARTH  = 6.37122e6_R8    ! radius of earth ~ m
+   real(R8),parameter,private :: SHR_CONST_G       = 9.80616_R8      ! acceleration of gravity ~ m/s^2
+   real(R8),parameter,private :: SHR_CONST_STEBOL  = 5.67e-8_R8      ! Stefan-Boltzmann constant ~ W/m^2/K^4
+   real(R8),parameter,private :: SHR_CONST_BOLTZ   = 1.38065e-23_R8  ! Boltzmann's constant ~ J/K/molecule
+   real(R8),parameter,private :: SHR_CONST_AVOGAD  = 6.02214e26_R8   ! Avogadro's number ~ molecules/kmole
+   real(R8),parameter,private :: SHR_CONST_RGAS    = SHR_CONST_AVOGAD*SHR_CONST_BOLTZ       ! Universal gas constant ~ J/K/kmole
+   real(R8),parameter,private :: SHR_CONST_MWDAIR  = 28.966_R8       ! molecular weight dry air ~ kg/kmole
+   real(R8),parameter,private :: SHR_CONST_MWWV    = 18.016_R8       ! molecular weight water vapor
+   real(R8),parameter,private :: SHR_CONST_RDAIR   = SHR_CONST_RGAS/SHR_CONST_MWDAIR        ! Dry air gas constant     ~ J/K/kg
+   real(R8),parameter,private :: SHR_CONST_RWV     = SHR_CONST_RGAS/SHR_CONST_MWWV          ! Water vapor gas constant ~ J/K/kg
+   real(R8),parameter,private :: SHR_CONST_KARMAN  = 0.4_R8          ! Von Karman constant
+   real(R8),parameter,private :: SHR_CONST_PSTD    = 101325.0_R8     ! standard pressure ~ pascals
+   real(R8),parameter,private :: SHR_CONST_TKFRZ   = 273.15_R8       ! freezing T of fresh water          ~ K
+   real(R8),parameter,private :: SHR_CONST_RHODAIR = &               ! density of dry air at STP  ~ kg/m^3
+                                 SHR_CONST_PSTD/(SHR_CONST_RDAIR*SHR_CONST_TKFRZ)
+   real(R8),parameter,private :: SHR_CONST_RHOFW   = 1.000e3_R8      ! density of fresh water     ~ kg/m^3
+   real(R8),parameter,private :: SHR_CONST_RHOSW   = 1.026e3_R8      ! density of sea water       ~ kg/m^3
+   real(R8),parameter,private :: SHR_CONST_CPDAIR  = 1.00464e3_R8    ! specific heat of dry air   ~ J/kg/K
+   real(R8),parameter,private :: SHR_CONST_CPWV    = 1.810e3_R8      ! specific heat of water vap ~ J/kg/K
+   real(R8),parameter,private :: SHR_CONST_LATICE  = 3.337e5_R8      ! latent heat of fusion      ~ J/kg
+   real(R8),parameter,private :: SHR_CONST_LATVAP  = 2.501e6_R8      ! latent heat of evaporation ~ J/kg
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+   !----------------------------------------------------------------------------
+   ! physical constants (all data public)
+   !----------------------------------------------------------------------------
+
 #ifdef GFS_PHYS
 ! SJL: the following are from fv3_gfsphysics/gfs_physics/physics/physcons.f90
 real,               public, parameter :: RADIUS = 6.3712e+6_r8_kind           !< Radius of the Earth [m]
@@ -59,78 +98,170 @@ real,               public, parameter :: TFREEZE = 273.15_r8_kind     !< Freezin
 
 #ifdef SMALL_EARTH
 #if defined(DCMIP) || (defined(HIWPP) && defined(SUPER_K))
- real, private, parameter :: small_fac =  1._r8_kind / 120._r8_kind #only needed for supercell test
+ real, private, parameter :: small_fac =  1._R8 / 120._R8 #only needed for supercell test
 #elif defined(HIWPP)
- real, private, parameter :: small_fac = 1._r8_kind / 166.7_r8_kind
+ real, private, parameter :: small_fac = 1._R8 / 166.7_R8
 #else
- real, private, parameter :: small_fac = 1._r8_kind / 10._r8_kind
+ real, private, parameter :: small_fac = 1._R8 / 10._R8
 #endif
 #else
- real, private, parameter :: small_fac = 1._r8_kind
+ real, private, parameter :: small_fac = 1._R8
 #endif
 
-real,         public, parameter :: RADIUS = 6371.0e+3_r8_kind * small_fac   !< Radius of the Earth [m]
-real(kind=8), public, parameter :: PI_8   = 3.14159265358979323846_r8_kind  !< Ratio of circle circumference to diameter [N/A]
-real,         public, parameter :: PI     = 3.14159265358979323846_r8_kind  !< Ratio of circle circumference to diameter [N/A]
-real,         public, parameter :: OMEGA  = 7.292e-5_r8_kind / small_fac    !< Rotation rate of the Earth [1/s]
-real,         public, parameter :: GRAV   = 9.80_r8_kind             !< Acceleration due to gravity [m/s^2]
-real,         public, parameter :: RDGAS  = 287.04_r8_kind           !< Gas constant for dry air [J/kg/deg]
-real,         public, parameter :: RVGAS  = 461.50_r8_kind           !< Gas constant for water vapor [J/kg/deg]
+!jt real,         public, parameter :: RADIUS = 6371.0e+3_r8_kind * small_fac   !< Radius of the Earth [m]
+ real(R8),        public, parameter :: RADIUS = SHR_CONST_REARTH * small_fac    !< Radius of the Earth [m]
+
+!jt real(kind=8), public, parameter :: PI_8   = 3.14159265358979323846_r8_kind  !< Ratio of circle circumference to diameter [N/A]
+ real(R8),        public, parameter :: PI_8   = SHR_CONST_PI                    !< Ratio of circle circumference to diameter [N/A]
+
+!jt real,         public, parameter :: PI     = 3.14159265358979323846_r8_kind  !< Ratio of circle circumference to diameter [N/A]
+real(R8),         public, parameter :: PI     = SHR_CONST_PI                    !< Ratio of circle circumference to diameter [N/A]
+
+!jt real,         public, parameter :: OMEGA  = 7.292e-5_r8_kind / small_fac    !< Rotation rate of the Earth [1/s]
+real(R8),         public, parameter :: OMEGA  = SHR_CONST_OMEGA  / small_fac    !< Rotation rate of the Earth [1/s]
+
+!jt real,         public, parameter :: GRAV   = 9.80_r8_kind             !< Acceleration due to gravity [m/s^2]
+real(R8),         public, parameter :: GRAV   = SHR_CONST_G              !< Acceleration due to gravity [m/s^2]
+
+!jt real,         public, parameter :: RDGAS  = 287.04_r8_kind           !< Gas constant for dry air [J/kg/deg]
+real(R8),         public, parameter :: RDGAS  = SHR_CONST_RDAIR          !< Gas constant for dry air [J/kg/deg]
+
+!jt real,         public, parameter :: RVGAS  = 461.50_r8_kind           !< Gas constant for water vapor [J/kg/deg]
+real(R8),         public, parameter :: RVGAS  = SHR_CONST_RWV            !< Gas constant for water vapor [J/kg/deg]
+
 ! Extra:
-real,         public, parameter :: HLV = 2.500e6_r8_kind             !< Latent heat of evaporation [J/kg]
-real,         public, parameter :: HLF = 3.34e5_r8_kind              !< Latent heat of fusion [J/kg]
-real,         public, parameter :: KAPPA  = 2.0_r8_kind/7.0_r8_kind  !< RDGAS / CP_AIR [dimensionless]
-real,         public, parameter :: CP_AIR = RDGAS/KAPPA              !< Specific heat capacity of dry air at constant pressure [J/kg/deg]
-real,         public, parameter :: TFREEZE = 273.16_r8_kind          !< Freezing temperature of fresh water [K]
+!jt real,         public, parameter :: HLV = 2.500e6_r8_kind             !< Latent heat of evaporation [J/kg]
+real(R8),         public, parameter :: HLV = SHR_CONST_LATVAP            !< Latent heat of evaporation [J/kg]
+
+!jt real,         public, parameter :: HLF = 3.34e5_r8_kind              !< Latent heat of fusion [J/kg]
+real(R8),         public, parameter :: HLF = SHR_CONST_LATICE            !< Latent heat of fusion [J/kg]
+
+!jtreal,          public, parameter :: KAPPA  = 2.0_r8_kind/7.0_r8_kind  !< RDGAS / CP_AIR [dimensionless]
+real(R8),         public, parameter :: KAPPA  = 2.0_r8/7.0_r8            !< RDGAS / CP_AIR [dimensionless]
+
+!jt real,         public, parameter :: CP_AIR = RDGAS/KAPPA              !< Specific heat capacity of dry air at constant pressure [J/kg/deg]
+real(R8),         public, parameter :: CP_AIR = SHR_CONST_CPDAIR         !< Specific heat capacity of dry air at constant pressure [J/kg/deg]
+
+!jt real,         public, parameter :: TFREEZE = 273.16_r8_kind          !< Freezing temperature of fresh water [K]
+real(R8),         public, parameter :: TFREEZE = SHR_CONST_TKFRZ         !< Freezing temperature of fresh water [K]
+
 #endif
 
-real, public, parameter :: STEFAN  = 5.6734e-8_r8_kind !< Stefan-Boltzmann constant [W/m^2/deg^4]
+!jt real,         public, parameter :: STEFAN  = 5.6734e-8_r8_kind !< Stefan-Boltzmann constant [W/m^2/deg^4]
+real(R8),         public, parameter :: STEFAN  = SHR_CONST_STEBOL  !< Stefan-Boltzmann constant [W/m^2/deg^4]
 
-real, public, parameter :: CP_VAPOR = 4.0_r8_kind*RVGAS      !< Specific heat capacity of water vapor at constant pressure [J/kg/deg]
-real, public, parameter :: CP_OCEAN = 3989.24495292815_r8_kind !< Specific heat capacity taken from McDougall (2002) 
-                                                               !! "Potential Enthalpy ..." [J/kg/deg]
-real, public, parameter :: RHO0    = 1.035e3_r8_kind  !< Average density of sea water [kg/m^3]
-real, public, parameter :: RHO0R   = 1.0_r8_kind/RHO0 !< Reciprocal of average density of sea water [m^3/kg]
-real, public, parameter :: RHO_CP  = RHO0*CP_OCEAN    !< (kg/m^3)*(cal/kg/deg C)(joules/cal) = (joules/m^3/deg C) [J/m^3/deg]
+!jt real,         public, parameter :: CP_VAPOR = 4.0_r8_kind*RVGAS      !< Specific heat capacity of water vapor at constant pressure [J/kg/deg]
+real(R8),         public, parameter :: CP_VAPOR = SHR_CONST_CPWV         !< Specific heat capacity of water vapor at constant pressure [J/kg/deg]
 
-real, public, parameter :: ES0 = 1.0_r8_kind        !< Humidity factor. Controls the humidity content of the atmosphere through
-                                                    !! the Saturation Vapour Pressure expression when using DO_SIMPLE. [dimensionless]
-real, public, parameter :: DENS_H2O = 1000._r8_kind !< Density of liquid water [kg/m^3]
-real, public, parameter :: HLS = HLV + HLF          !< Latent heat of sublimation [J/kg]
+!jt real,         public, parameter :: CP_OCEAN = 3989.24495292815_r8_kind !< Specific heat capacity taken from McDougall (2002) 
+real(R8),         public, parameter :: CP_OCEAN = 3989.24495292815_r8      !< Specific heat capacity taken from McDougall (2002) 
 
-real, public, parameter :: WTMAIR   = 2.896440E+01_r8_kind   !< Molecular weight of air [AMU]
-real, public, parameter :: WTMH2O   = WTMAIR*(RDGAS/RVGAS)   !< Molecular weight of water [AMU]
-real, public, parameter :: WTMOZONE =  47.99820_r8_kind      !< Molecular weight of ozone [AMU]
-real, public, parameter :: WTMC     =  12.00000_r8_kind      !< Molecular weight of carbon [AMU]
-real, public, parameter :: WTMCO2   =  44.00995_r8_kind      !< Molecular weight of carbon dioxide [AMU]
-real, public, parameter :: WTMCH4   =  16.0425_r8_kind       !< Molecular weight of methane [AMU]
-real, public, parameter :: WTMO2    =  31.9988_r8_kind       !< Molecular weight of molecular oxygen [AMU]
-real, public, parameter :: WTMCFC11 = 137.3681_r8_kind       !< Molecular weight of CFC-11 (CCl3F) [AMU]
-real, public, parameter :: WTMCFC12 = 120.9135_r8_kind       !< Molecular weight of CFC-21 (CCl2F2) [AMU]
-real, public, parameter :: WTMN     =  14.0067_r8_kind       !< Molecular weight of Nitrogen [AMU]
-real, public, parameter :: DIFFAC   = 1.660000E+00_r8_kind   !< Diffusivity factor [dimensionless]
-real, public, parameter :: AVOGNO   = 6.023000E+23_r8_kind   !< Avogadro's number [atoms/mole]
-real, public, parameter :: PSTD     = 1.013250E+06_r8_kind   !< Mean sea level pressure [dynes/cm^2]
-real, public, parameter :: PSTD_MKS = 101325.0_r8_kind       !< Mean sea level pressure [N/m^2]
+!jt real,         public, parameter :: RHO0    = 1.035e3_r8_kind  !< Average density of sea water [kg/m^3]
+real(R8),         public, parameter :: RHO0    = SHR_CONST_RHOSW  !< Average density of sea water [kg/m^3]
 
-real, public, parameter :: SECONDS_PER_DAY    = 8.640000E+04_r8_kind !< Seconds in a day [s]
-real, public, parameter :: SECONDS_PER_HOUR   = 3600._r8_kind        !< Seconds in an hour [s]
-real, public, parameter :: SECONDS_PER_MINUTE = 60._r8_kind          !< Seconds in a minute [s]
-real, public, parameter :: RAD_TO_DEG         = 180._r8_kind/PI      !< Degrees per radian [deg/rad]
-real, public, parameter :: DEG_TO_RAD         = PI/180._r8_kind      !< Radians per degree [rad/deg]
-real, public, parameter :: RADIAN             = RAD_TO_DEG           !< Equal to RAD_TO_DEG for backward compatability. [rad/deg]
-real, public, parameter :: ALOGMIN            = -50.0_r8_kind        !< Minimum value allowed as argument to log function [N/A]
-real, public, parameter :: EPSLN              = 1.0e-40_r8_kind      !< A small number to prevent divide by zero exceptions [N/A]
+!jt real,         public, parameter :: RHO0R   = 1.0_r8_kind/RHO0 !< Reciprocal of average density of sea water [m^3/kg]
+real(R8),         public, parameter :: RHO0R   = 1.0_r8/RHO0      !< Reciprocal of average density of sea water [m^3/kg]
 
-real, public, parameter :: RADCON = ((1.0E+02*GRAV)/(1.0E+04*CP_AIR))*SECONDS_PER_DAY !< Factor used to convert flux divergence to
-                                                                                      !! heating rate in degrees per day [deg sec/(cm day)]
-real, public, parameter :: RADCON_MKS  = (GRAV/CP_AIR)*SECONDS_PER_DAY !< Factor used to convert flux divergence to
-                                                                       !! heating rate in degrees per day [deg sec/(m day)]
-real, public, parameter :: O2MIXRAT    = 2.0953E-01_r8_kind !< Mixing ratio of molecular oxygen in air [dimensionless]
-real, public, parameter :: RHOAIR      = 1.292269_r8_kind   !< Reference atmospheric density [kg/m^3]
-real, public, parameter :: VONKARM     = 0.40_r8_kind       !< Von Karman constant [dimensionless]
-real, public, parameter :: C2DBARS     = 1.e-4_r8_kind      !< Converts rho*g*z (in mks) to dbars: 1dbar = 10^4 (kg/m^3)(m/s^2)m [dbars]
-real, public, parameter :: KELVIN      = 273.15_r8_kind     !< Degrees Kelvin at zero Celsius [K]
+!jt real,         public, parameter :: RHO_CP  = RHO0*CP_OCEAN    !< (kg/m^3)*(cal/kg/deg C)(joules/cal) = (joules/m^3/deg C) [J/m^3/deg]
+real(R8),         public, parameter :: RHO_CP  = RHO0*CP_OCEAN    !< (kg/m^3)*(cal/kg/deg C)(joules/cal) = (joules/m^3/deg C) [J/m^3/deg]
+
+!jt real,         public, parameter :: ES0 = 1.0_r8_kind        !< Humidity factor. Controls the humidity content of the atmosphere through
+real(R8),         public, parameter :: ES0 = 1.0_r8             !< Humidity factor. Controls the humidity content of the atmosphere through
+                                                                !! the Saturation Vapour Pressure expression when using DO_SIMPLE. [dimensionless]
+
+!jt real,         public, parameter :: DENS_H2O = 1000._r8_kind   !< Density of liquid water [kg/m^3]
+real(R8),         public, parameter :: DENS_H2O = SHR_CONST_RHOFW !< Density of liquid water [kg/m^3]
+
+!jt real,         public, parameter :: HLS = HLV + HLF          !< Latent heat of sublimation [J/kg]
+real(R8),         public, parameter :: HLS = HLV + HLF          !< Latent heat of sublimation [J/kg]
+
+!jt real,         public, parameter :: WTMAIR   = 2.896440E+01_r8_kind   !< Molecular weight of air [AMU]
+real(R8),         public, parameter :: WTMAIR   = SHR_CONST_MWDAIR       !< Molecular weight of air [AMU]
+
+!jt real,         public, parameter :: WTMH2O   = WTMAIR*(RDGAS/RVGAS)   !< Molecular weight of water [AMU]
+real(R8),         public, parameter :: WTMH2O   = SHR_CONST_MWWV         !< Molecular weight of water [AMU]
+
+!jt real,         public, parameter :: WTMOZONE =  47.99820_r8_kind      !< Molecular weight of ozone [AMU]
+real(R8),         public, parameter :: WTMOZONE =  47.99820_r8           !< Molecular weight of ozone [AMU]
+
+!jt real,         public, parameter :: WTMC     =  12.00000_r8_kind      !< Molecular weight of carbon [AMU]
+real(R8),         public, parameter :: WTMC     =  12.00000_r8           !< Molecular weight of carbon [AMU]
+
+!jt real,         public, parameter :: WTMCO2   =  44.00995_r8_kind      !< Molecular weight of carbon dioxide [AMU]
+real(R8),         public, parameter :: WTMCO2   =  44.00995_r8           !< Molecular weight of carbon dioxide [AMU]
+
+!jt real,         public, parameter :: WTMCH4   =  16.0425_r8_kind       !< Molecular weight of methane [AMU]
+real(R8),         public, parameter :: WTMCH4   =  16.0425_r8            !< Molecular weight of methane [AMU]
+
+!jt real,         public, parameter :: WTMO2    =  31.9988_r8_kind       !< Molecular weight of molecular oxygen [AMU]
+real(R8),         public, parameter :: WTMO2    =  31.9988_r8            !< Molecular weight of molecular oxygen [AMU]
+
+!jt real,         public, parameter :: WTMCFC11 = 137.3681_r8_kind       !< Molecular weight of CFC-11 (CCl3F) [AMU]
+real(R8),         public, parameter :: WTMCFC11 = 137.3681_r8            !< Molecular weight of CFC-11 (CCl3F) [AMU]
+
+!jt real,         public, parameter :: WTMCFC12 = 120.9135_r8_kind       !< Molecular weight of CFC-21 (CCl2F2) [AMU]
+real(R8),         public, parameter :: WTMCFC12 = 120.9135_r8            !< Molecular weight of CFC-21 (CCl2F2) [AMU]
+
+!jt real,         public, parameter :: WTMN     =  14.0067_r8_kind       !< Molecular weight of Nitrogen [AMU]
+real(R8),         public, parameter :: WTMN     =  14.0067_r8            !< Molecular weight of Nitrogen [AMU]
+
+!jt real,         public, parameter :: DIFFAC   = 1.660000E+00_r8_kind   !< Diffusivity factor [dimensionless]
+real(R8),         public, parameter :: DIFFAC   = 1.660000E+00_r8        !< Diffusivity factor [dimensionless]
+
+!jt real,         public, parameter :: AVOGNO   = 6.023000E+23_r8_kind   !< Avogadro's number [atoms/mole]
+real(R8),         public, parameter :: AVOGNO   = 6.02214E+23_r8         !< Avogadro's number [atoms/mole]
+
+!jt real,         public, parameter :: PSTD     = 1.013250E+06_r8_kind   !< Mean sea level pressure [dynes/cm^2]
+real(R8),         public, parameter :: PSTD     = 1.013250E+06_r8        !< Mean sea level pressure [dynes/cm^2]
+
+!jt real,         public, parameter :: PSTD_MKS = 101325.0_r8_kind       !< Mean sea level pressure [N/m^2]
+real(R8),         public, parameter :: PSTD_MKS = SHR_CONST_PSTD         !< Mean sea level pressure [N/m^2]
+
+!jt real,         public, parameter :: SECONDS_PER_DAY    = 8.640000E+04_r8_kind !< Seconds in a day [s]
+real(R8),         public, parameter :: SECONDS_PER_DAY    = SHR_CONST_CDAY       !< Seconds in a day [s]
+
+!jt real,         public, parameter :: SECONDS_PER_HOUR   = 3600._r8_kind        !< Seconds in an hour [s]
+real(R8),         public, parameter :: SECONDS_PER_HOUR   = 3600._r8             !< Seconds in an hour [s]
+
+!jt real,         public, parameter :: SECONDS_PER_MINUTE = 60._r8_kind          !< Seconds in a minute [s]
+real(R8),         public, parameter :: SECONDS_PER_MINUTE = 60._r8               !< Seconds in a minute [s]
+
+!jt real,         public, parameter :: RAD_TO_DEG         = 180._r8_kind/PI      !< Degrees per radian [deg/rad]
+real(R8),         public, parameter :: RAD_TO_DEG         = 180._r8     /PI      !< Degrees per radian [deg/rad]
+
+!jt real,         public, parameter :: DEG_TO_RAD         = PI/180._r8_kind      !< Radians per degree [rad/deg]
+real(R8),         public, parameter :: DEG_TO_RAD         = PI/180._r8           !< Radians per degree [rad/deg]
+
+!jt real,         public, parameter :: RADIAN             = RAD_TO_DEG           !< Equal to RAD_TO_DEG for backward compatability. [rad/deg]
+real(R8),         public, parameter :: RADIAN             = RAD_TO_DEG           !< Equal to RAD_TO_DEG for backward compatability. [rad/deg]
+
+!jt real,         public, parameter :: ALOGMIN            = -50.0_r8_kind        !< Minimum value allowed as argument to log function [N/A]
+real(R8),         public, parameter :: ALOGMIN            = -50.0_r8             !< Minimum value allowed as argument to log function [N/A]
+
+!jt real,         public, parameter :: EPSLN              = 1.0e-40_r8_kind      !< A small number to prevent divide by zero exceptions [N/A]
+real(R8),         public, parameter :: EPSLN              = 1.0e-40_r8           !< A small number to prevent divide by zero exceptions [N/A]
+
+!jt real,         public, parameter :: RADCON = ((1.0E+02*GRAV)/(1.0E+04*CP_AIR))*SECONDS_PER_DAY       !< Factor used to convert flux divergence to
+real(R8),         public, parameter :: RADCON = ((1.0E+02_r8*GRAV)/(1.0E+04_r8*CP_AIR))*SECONDS_PER_DAY !< Factor used to convert flux divergence to
+                                                                                                        !! heating rate in degrees per day [deg sec/(cm day)]
+!jt real,         public, parameter :: RADCON_MKS  = (GRAV/CP_AIR)*SECONDS_PER_DAY !< Factor used to convert flux divergence to
+real(R8),         public, parameter :: RADCON_MKS  = (GRAV/CP_AIR)*SECONDS_PER_DAY !< Factor used to convert flux divergence to
+                                                                                   !! heating rate in degrees per day [deg sec/(m day)]
+
+!jt real,         public, parameter :: O2MIXRAT    = 2.0953E-01_r8_kind !< Mixing ratio of molecular oxygen in air [dimensionless]
+real(R8),         public, parameter :: O2MIXRAT    = 2.0953E-01_r8      !< Mixing ratio of molecular oxygen in air [dimensionless]
+
+!jt real,         public, parameter :: RHOAIR      = 1.292269_r8_kind   !< Reference atmospheric density [kg/m^3]
+real(R8),         public, parameter :: RHOAIR      = SHR_CONST_RHODAIR  !< Reference atmospheric density [kg/m^3]
+
+!jt real,         public, parameter :: VONKARM     = 0.40_r8_kind       !< Von Karman constant [dimensionless]
+real(R8),         public, parameter :: VONKARM     = SHR_CONST_KARMAN   !< Von Karman constant [dimensionless]
+
+!jt real,         public, parameter :: C2DBARS     = 1.e-4_r8_kind      !< Converts rho*g*z (in mks) to dbars: 1dbar = 10^4 (kg/m^3)(m/s^2)m [dbars]
+real(R8),         public, parameter :: C2DBARS     = 1.e-4_r8           !< Converts rho*g*z (in mks) to dbars: 1dbar = 10^4 (kg/m^3)(m/s^2)m [dbars]
+
+!jt real,         public, parameter :: KELVIN      = 273.15_r8_kind     !< Degrees Kelvin at zero Celsius [K]
+real(R8),         public, parameter :: KELVIN      = 273.15_r8          !< Degrees Kelvin at zero Celsius [K]
 
 public :: constants_init
 
