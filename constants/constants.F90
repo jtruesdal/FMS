@@ -136,11 +136,12 @@ real(R8),         public, parameter :: HLV = SHR_CONST_LATVAP            !< Late
 !jt real,         public, parameter :: HLF = 3.34e5_r8_kind              !< Latent heat of fusion [J/kg]
 real(R8),         public, parameter :: HLF = SHR_CONST_LATICE            !< Latent heat of fusion [J/kg]
 
-!jtreal,          public, parameter :: KAPPA  = 2.0_r8_kind/7.0_r8_kind  !< RDGAS / CP_AIR [dimensionless]
-real(R8),         public, parameter :: KAPPA  = 2.0_r8/7.0_r8            !< RDGAS / CP_AIR [dimensionless]
-
 !jt real,         public, parameter :: CP_AIR = RDGAS/KAPPA              !< Specific heat capacity of dry air at constant pressure [J/kg/deg]
 real(R8),         public, parameter :: CP_AIR = SHR_CONST_CPDAIR         !< Specific heat capacity of dry air at constant pressure [J/kg/deg]
+
+!jtreal,          public, parameter :: KAPPA  = 2.0_r8_kind/7.0_r8_kind  !< RDGAS / CP_AIR [dimensionless]
+!jtreal(R8),         public, parameter :: KAPPA  = 2.0_r8/7.0_r8            !< RDGAS / CP_AIR [dimensionless]
+real(R8),         public, parameter :: KAPPA  = RDGAS/CP_AIR             !< RDGAS / CP_AIR [dimensionless]
 
 !jt real,         public, parameter :: TFREEZE = 273.16_r8_kind          !< Freezing temperature of fresh water [K]
 real(R8),         public, parameter :: TFREEZE = SHR_CONST_TKFRZ         !< Freezing temperature of fresh water [K]
