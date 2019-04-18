@@ -186,14 +186,20 @@ contains
 !   <TEMPLATE>
 !     call tracer_manager_init
 !   </TEMPLATE>
-subroutine tracer_manager_init
+  subroutine tracer_manager_init(table)
+    
 integer :: model, num_tracers, num_prog, num_diag
+character(len=1024), intent(inout), optional :: table(:)
 
   if(module_is_initialized) return
   module_is_initialized = .TRUE.
 
   call write_version_number ("TRACER_MANAGER_MOD", version)
-  call field_manager_init()
+  if (present(table)) then
+     call field_manager_init(table=table)
+  else
+     call field_manager_init()
+  end if
   TRACER_ARRAY = NOTRACER
   do model=1,NUM_MODELS
     call get_tracer_meta_data(model, num_tracers, num_prog, num_diag)
@@ -599,13 +605,19 @@ end function model_tracer_number
 !   <OUT NAME="num_diag" TYPE="integer">
 !     The number of diagnostic tracers within the component model.
 !   </OUT>
-subroutine register_tracers(model, num_tracers, num_prog, num_diag, num_family)
+subroutine register_tracers(model, num_tracers, num_prog, num_diag, num_family,table)
 integer, intent(in) :: model
 integer, intent(out) :: num_tracers, num_prog, num_diag
 integer, intent(out), optional :: num_family
+character(len=1024), intent(inout), optional :: table(:)
 
-if(.not.module_is_initialized) call tracer_manager_init
-
+if(.not.module_is_initialized) then
+   if (present(table)) then
+      call tracer_manager_init(table=table)
+   else
+      call tracer_manager_init
+   end if
+end if
 call get_number_tracers(model, num_tracers, num_prog, num_diag, num_family)
 
 end subroutine register_tracers

@@ -566,10 +566,10 @@ contains
 !     information and is queried by the appropriate  module.
 !   </DESCRIPTION>
 !   <TEMPLATE>
-!     call field_manager_init(nfields, table_name)
+!     call field_manager_init(nfields, table_name, table)
 !   </TEMPLATE>
 
-subroutine field_manager_init(nfields, table_name)
+subroutine field_manager_init(nfields, table_name, table)
 
 ! <OUT NAME="nfields" TYPE="integer">
 !   The number of fields.
@@ -583,6 +583,7 @@ integer,                      intent(out), optional :: nfields
 ! </IN>
 
 character(len=fm_string_len), intent(in), optional :: table_name
+character(len=1024), intent(inout), optional :: table(:)
 
 !+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 !        local parameters
@@ -618,8 +619,10 @@ integer                          :: m
 integer                          :: midcont
 integer                          :: model
 integer                          :: startcont
+integer                          :: irecnum
 logical                          :: flag_method
 logical                          :: fm_success
+logical                          :: continue_loop=.true.
 type(field_names_type_short)     :: text_names_short
 type(field_names_type)           :: text_names
 type(method_type_short)          :: text_method_short
@@ -653,7 +656,7 @@ else
    tbl_name = trim(table_name)
 endif
 
-if (.not. file_exist(trim(tbl_name))) then
+if (.not. file_exist(trim(tbl_name)).and. .not. present(table)) then
 !   <ERROR MSG="No field table available, so no fields are being registered." STATUS="NOTE">
 !      The field table does not exist.
 !   </ERROR>
@@ -668,12 +671,20 @@ return
 endif
 
 
-call mpp_open(iunit,file=trim(tbl_name), form=MPP_ASCII, action=MPP_RDONLY)
+if (.not. present(table)) &
+     call mpp_open(iunit,file=trim(tbl_name), form=MPP_ASCII, action=MPP_RDONLY)
 !write_version_number should precede all writes to stdlog from field_manager
 call write_version_number("FIELD_MANAGER_MOD", version)
 log_unit = stdlog()
-do while (.TRUE.)
-   read(iunit,'(a)',end=89,err=99) record
+irecnum=0
+do while (continue_loop)
+   if (present(table)) then
+      irecnum=irecnum+1
+      read(table(irecnum),'(a)',end=89,err=99) record
+      if (irecnum.eq.size(table,1)) continue_loop=.false.
+   else
+      read(iunit,'(a)',end=89,err=99) record
+   end if
    write( log_unit,'(a)' )record
    if (record(1:1) == "#" ) cycle
    ltrec =  LEN_TRIM(record)
@@ -1000,7 +1011,7 @@ do while (.TRUE.)
 enddo
          
 89 continue
-close(iunit)
+if (.not. present(table)) close(iunit)
 
 if(present(nfields)) nfields = num_fields
 if (verb .gt. verb_level_warn) &
